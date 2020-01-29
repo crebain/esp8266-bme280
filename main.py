@@ -7,6 +7,16 @@ import utime
 import esp
 
 
+def blink(times=1):
+    led = Pin(2, Pin.OUT)
+    for _ in range(times):
+        led.off()
+        utime.sleep_ms(100)
+        led.on()
+        utime.sleep_ms(200)
+
+blink(1)
+
 def network_wait():
     nic = network.WLAN(network.STA_IF)
     nic.active(True)
@@ -18,6 +28,7 @@ def network_wait():
             counter += 1
             utime.sleep(1)
             if counter == 10:
+                blink(6)
                 machine.reset()
 
     print(nic.ifconfig())
@@ -57,7 +68,7 @@ def set_sleep(sleep):
     rtc.memory(mem)
 
 
-def go_to_sleep(force=False):
+def go_to_sleep(force=True):
     if force or machine.reset_cause() == machine.DEEPSLEEP_RESET or machine.reset_cause() == machine.WDT_RESET:
         rtc = machine.RTC()
         # that's in microseconds
@@ -69,6 +80,9 @@ def go_to_sleep(force=False):
         esp.deepsleep(sleep)
 
 
+blink(2)
 network_wait()
+blink(3)
 report_sensors()
-go_to_sleep()
+blink(4)
+go_to_sleep(False)
