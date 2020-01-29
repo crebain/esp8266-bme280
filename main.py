@@ -6,14 +6,22 @@ import network
 import utime
 import esp
 
+
 def network_wait():
     nic = network.WLAN(network.STA_IF)
+    nic.active(True)
     if not nic.isconnected():
         nic.connect()
+        counter = 0
         print("Waiting for connection...")
         while not nic.isconnected():
+            counter += 1
             utime.sleep(1)
+            if counter == 10:
+                machine.reset()
+
     print(nic.ifconfig())
+
 
 def report_sensors():
     i2c = I2C(scl=Pin(5), sda=Pin(4), freq=10000)
@@ -24,20 +32,43 @@ def report_sensors():
     CLIENT_ID = "cripple"
     mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan')
     mqtt.connect()
-    mqtt.publish('global/house/temperature/{}'.format(CLIENT_ID), str(temp/100))
-    mqtt.publish('global/house/pressure/{}'.format(CLIENT_ID), str(pressure/25600))
-    mqtt.publish('global/house/humidity/{}'.format(CLIENT_ID), str(humidity/1024))
+    mqtt.publish(
+        'global/house/temperature/{}'.format(CLIENT_ID), str(temp/100))
+    print('temp: {}'.format(temp/100))
+    mqtt.publish('global/house/pressure/{}'.format(CLIENT_ID),
+                 str(pressure/25600))
+    print('pres: {}'.format(pressure/25600))
+    mqtt.publish('global/house/humidity/{}'.format(CLIENT_ID),
+                 str(humidity/1024))
+    print('humi: {}'.format(humidity/1024))
 
     adc = ADC(0)
     volts_reading = adc.read()
-    volts = volts_reading*0.00419
+    volts = volts_reading/241.0
     mqtt.publish('global/voltage/{}'.format(CLIENT_ID), str(volts))
+    print('volt: {}'.format(volts))
 
     mqtt.disconnect()
 
+
+def set_sleep(sleep):
+    rtc = machine.RTC()
+    mem = b'{}'.format(sleep)
+    rtc.memory(mem)
+
+
+def go_to_sleep(force=False):
+    if force or machine.reset_cause() == machine.DEEPSLEEP_RESET or machine.reset_cause() == machine.WDT_RESET:
+        rtc = machine.RTC()
+        # that's in microseconds
+        sleep = 10*60*1000*1000
+        mem = rtc.memory()
+        if mem != b'':
+            sleep = int(mem)
+
+        esp.deepsleep(sleep)
+
+
 network_wait()
 report_sensors()
-
-if (machine.reset_cause() == machine.DEEPSLEEP_RESET):
-    # that's in microseconds
-    esp.deepsleep(10*60*1000*1000)
+go_to_sleep()
