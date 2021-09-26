@@ -55,7 +55,7 @@ def report_sensors():
 
     adc = ADC(0)
     volts_reading = adc.read()
-    volts = volts_reading/241.0
+    volts = volts_reading/246.0
     mqtt.publish('global/voltage/{}'.format(CLIENT_ID), str(volts))
     print('volt: {}'.format(volts))
 
