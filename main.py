@@ -41,7 +41,7 @@ def report_sensors():
     (temp, pressure, humidity) = bme.read_compensated_data()
 
     CLIENT_ID = "cripple"
-    mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan')
+    mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan', keepalive=60)
     mqtt.connect()
     mqtt.publish(
         'global/house/temperature/{}'.format(CLIENT_ID), str(temp/100))
