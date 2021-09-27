@@ -94,6 +94,8 @@ def main():
     network_wait()
     try:
         log = get_logger()
+        reset_cause = machine.reset_cause()
+        log.info("Reset cause: %s" % reset_cause)
         try:
             blink(3)
             report_sensors(log)
