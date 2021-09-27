@@ -5,6 +5,9 @@ from bme280_int import BME280
 import network
 import utime
 import esp
+import socket
+import usyslog
+import sys
 
 
 def blink(times=1):
@@ -34,7 +37,14 @@ def network_wait():
     print(nic.ifconfig())
 
 
-def report_sensors():
+def get_logger():
+    addr = socket.getaddrinfo('libreelec.lan', 514)
+    ip = addr[0][-1][0]
+    log = usyslog.UDPClient(ip)
+    return log
+
+
+def report_sensors(log):
     i2c = I2C(scl=Pin(5), sda=Pin(4), freq=10000)
     bme = BME280(i2c=i2c)
 
@@ -45,19 +55,19 @@ def report_sensors():
     mqtt.connect()
     mqtt.publish(
         'global/house/temperature/{}'.format(CLIENT_ID), str(temp/100))
-    print('temp: {}'.format(temp/100))
+    log.info('temp: {}'.format(temp/100))
     mqtt.publish('global/house/pressure/{}'.format(CLIENT_ID),
                  str(pressure/25600))
-    print('pres: {}'.format(pressure/25600))
+    log.info('pres: {}'.format(pressure/25600))
     mqtt.publish('global/house/humidity/{}'.format(CLIENT_ID),
                  str(humidity/1024))
-    print('humi: {}'.format(humidity/1024))
+    log.info('humi: {}'.format(humidity/1024))
 
     adc = ADC(0)
     volts_reading = adc.read()
     volts = volts_reading/246.0
     mqtt.publish('global/voltage/{}'.format(CLIENT_ID), str(volts))
-    print('volt: {}'.format(volts))
+    log.info('volt: {}'.format(volts))
 
     mqtt.disconnect()
 
@@ -79,10 +89,18 @@ def go_to_sleep(force=True):
 
         esp.deepsleep(sleep)
 
+def main():
+    blink(2)
+    network_wait()
+    try:
+        log = get_logger()
+        try:
+            blink(3)
+            report_sensors(log)
+            blink(4)
+        except Exception as e:
+            log.error("Error: %s" % e)
+    finally:
+        go_to_sleep(False)
 
-blink(2)
-network_wait()
-blink(3)
-report_sensors()
-blink(4)
-go_to_sleep(False)
+main()
