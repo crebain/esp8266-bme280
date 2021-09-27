@@ -9,6 +9,7 @@ import socket
 import usyslog
 import sys
 
+CLIENT_ID = 'cripple'
 
 def blink(times=1):
     led = Pin(2, Pin.OUT)
@@ -50,7 +51,6 @@ def report_sensors(log):
 
     (temp, pressure, humidity) = bme.read_compensated_data()
 
-    CLIENT_ID = "cripple"
     mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan', keepalive=60)
     mqtt.connect()
     mqtt.publish(
