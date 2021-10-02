@@ -99,6 +99,7 @@ def go_to_sleep(force=True):
             sleep = int(mem)
 
         log.info('going deep sleep')
+        log.close()
         esp.deepsleep(sleep)
 
 def main():
