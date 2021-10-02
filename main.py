@@ -11,6 +11,8 @@ import sys
 
 CLIENT_ID = 'cripple'
 
+log = usyslog.SyslogClient()
+
 def blink(times=1):
     led = Pin(2, Pin.OUT)
     for _ in range(times):
@@ -41,11 +43,12 @@ def network_wait():
 def get_logger():
     addr = socket.getaddrinfo('libreelec.lan', 514)
     ip = addr[0][-1][0]
+    global log
     log = usyslog.UDPClient(ip)
     return log
 
 
-def report_sensors(log):
+def report_sensors():
     i2c = I2C(scl=Pin(5), sda=Pin(4), freq=10000)
     bme = BME280(i2c=i2c)
 
@@ -79,6 +82,7 @@ def set_sleep(sleep):
 
 
 def go_to_sleep(force=True):
+    log.info('go_to_sleep({})'.format(force))
     if force or machine.reset_cause() == machine.DEEPSLEEP_RESET or machine.reset_cause() == machine.WDT_RESET:
         rtc = machine.RTC()
         # that's in microseconds
@@ -93,12 +97,12 @@ def main():
     blink(2)
     network_wait()
     try:
-        log = get_logger()
+        get_logger()
         reset_cause = machine.reset_cause()
         log.info("Reset cause: %s" % reset_cause)
         try:
             blink(3)
-            report_sensors(log)
+            report_sensors()
             blink(4)
         except Exception as e:
             log.error("Error: %s" % e)
