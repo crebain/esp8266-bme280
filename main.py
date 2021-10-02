@@ -56,6 +56,7 @@ def report_sensors():
 
     mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan', keepalive=60)
     mqtt.connect()
+    log.info('MQTT connected')
     mqtt.publish(
         'global/house/temperature/{}'.format(CLIENT_ID), str(temp/100))
     log.info('temp: {}'.format(temp/100))
@@ -73,6 +74,7 @@ def report_sensors():
     log.info('volt: {}'.format(volts))
 
     mqtt.disconnect()
+    log.info('MQTT disconnected')
 
 
 def set_sleep(sleep):
@@ -83,14 +85,20 @@ def set_sleep(sleep):
 
 def go_to_sleep(force=True):
     log.info('go_to_sleep({})'.format(force))
-    if force or machine.reset_cause() == machine.DEEPSLEEP_RESET or machine.reset_cause() == machine.WDT_RESET:
+    reset_cause = machine.reset_cause()
+    log.info('That was a reset #{}'.format(reset_cause))
+    if force or reset_cause == machine.DEEPSLEEP_RESET or reset_cause == machine.WDT_RESET:
         rtc = machine.RTC()
+        log.info('rtc created')
         # that's in microseconds
         sleep = 10*60*1000*1000
         mem = rtc.memory()
+        log.info('rtc memory read')
         if mem != b'':
+            log.info('mem is not b\'\'')
             sleep = int(mem)
 
+        log.info('going deep sleep')
         esp.deepsleep(sleep)
 
 def main():
