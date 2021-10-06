@@ -58,23 +58,30 @@ def report_sensors():
     mqtt.set_last_will('{}/status'.format(CLIENT_ID), 'offline', retain = True)
     mqtt.connect()
     log.info('MQTT connected')
-    mqtt.publish(
-        '{}/status'.format(CLIENT_ID), 'connected', retain = True)
 
     mqtt.publish(
-        '{}/temperature'.format(CLIENT_ID), str(temp/100), retain = True)
+        '{}/status'.format(CLIENT_ID),
+        'connected', retain = True)
 
+    mqtt.publish(
+        '{}/temperature'.format(CLIENT_ID),
+        str(temp/100), retain = True)
     log.info('temp: {}'.format(temp/100))
-    mqtt.publish('{}/pressure'.format(CLIENT_ID),
-                 str(pressure/25600), retain = True)
+
+    mqtt.publish(
+        '{}/pressure'.format(CLIENT_ID),
+        str(pressure/25600), retain = True)
     log.info('pres: {}'.format(pressure/25600))
-    mqtt.publish('{}/humidity'.format(CLIENT_ID),
-                 str(humidity/1024), retain = True)
+
+    mqtt.publish(
+        '{}/humidity'.format(CLIENT_ID),
+        str(humidity/1024), retain = True)
     log.info('humi: {}'.format(humidity/1024))
 
     adc = ADC(0)
     volts_reading = adc.read()
-    volts = volts_reading/246.0
+    volts = volts_reading/239.0
+
     mqtt.publish('{}/voltage'.format(CLIENT_ID), str(volts), retain = True)
     log.info('volt: {}'.format(volts))
 
