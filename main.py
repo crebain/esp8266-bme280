@@ -55,10 +55,15 @@ def report_sensors():
     (temp, pressure, humidity) = bme.read_compensated_data()
 
     mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan', keepalive=60)
+    mqtt.set_last_will('{}/status', 'dead', retain = True)
     mqtt.connect()
     log.info('MQTT connected')
     mqtt.publish(
+        '{}/status', 'online', retain = True)
+
+    mqtt.publish(
         '{}/temperature'.format(CLIENT_ID), str(temp/100), retain = True)
+
     log.info('temp: {}'.format(temp/100))
     mqtt.publish('{}/pressure'.format(CLIENT_ID),
                  str(pressure/25600), retain = True)
@@ -72,6 +77,9 @@ def report_sensors():
     volts = volts_reading/246.0
     mqtt.publish('{}/voltage'.format(CLIENT_ID), str(volts), retain = True)
     log.info('volt: {}'.format(volts))
+
+    mqtt.publish(
+        '{}/status', 'offline', retain = True)
 
     mqtt.disconnect()
     log.info('MQTT disconnected')
