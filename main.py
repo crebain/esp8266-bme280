@@ -124,13 +124,11 @@ def main():
         get_logger()
         reset_cause = machine.reset_cause()
         log.info("Reset cause: %s" % reset_cause)
-        try:
-            blink(3)
-            report_sensors()
-            blink(4)
-        except Exception as e:
-            log.error("Error: %s" % e)
-    finally:
+        blink(3)
+        report_sensors()
+        blink(4)
         go_to_sleep(False)
+    except Exception as e:
+        log.error("Error: %s" % e)
 
 main()
