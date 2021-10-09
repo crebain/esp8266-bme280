@@ -5,11 +5,11 @@ from bme280_int import BME280
 import network
 import utime
 import esp
-import socket
 import usyslog
-import sys
+import ntptime
+import time
 
-CLIENT_ID = 'cripple'
+client_id = 'cripple'
 
 log = usyslog.SyslogClient()
 
@@ -23,7 +23,7 @@ def blink(times=1):
 
 blink(1)
 
-def network_wait():
+def init_network():
     nic = network.WLAN(network.STA_IF)
     nic.active(True)
     if not nic.isconnected():
@@ -38,12 +38,13 @@ def network_wait():
                 machine.reset()
 
     print(nic.ifconfig())
+    global client_id
+    client_id = nic.config('dhcp_hostname')
 
 
 def get_logger():
     global log
     log = usyslog.UDPClient('libreelec.lan')
-    return log
 
 
 def report_sensors():
@@ -52,27 +53,27 @@ def report_sensors():
 
     (temp, pressure, humidity) = bme.read_compensated_data()
 
-    mqtt = MQTTClient(CLIENT_ID, 'libreelec.lan', keepalive=60)
-    mqtt.set_last_will('{}/status'.format(CLIENT_ID), 'offline', retain = True)
+    mqtt = MQTTClient(client_id, 'libreelec.lan', keepalive=60)
+    mqtt.set_last_will('{}/status'.format(client_id), 'offline', retain = True)
     mqtt.connect()
     log.info('MQTT connected')
 
     mqtt.publish(
-        '{}/status'.format(CLIENT_ID),
+        '{}/status'.format(client_id),
         'connected', retain = True)
 
     mqtt.publish(
-        '{}/temperature'.format(CLIENT_ID),
+        '{}/temperature'.format(client_id),
         str(temp/100), retain = True)
     log.info('temp: {}'.format(temp/100))
 
     mqtt.publish(
-        '{}/pressure'.format(CLIENT_ID),
+        '{}/pressure'.format(client_id),
         str(pressure/25600), retain = True)
     log.info('pres: {}'.format(pressure/25600))
 
     mqtt.publish(
-        '{}/humidity'.format(CLIENT_ID),
+        '{}/humidity'.format(client_id),
         str(humidity/1024), retain = True)
     log.info('humi: {}'.format(humidity/1024))
 
@@ -81,11 +82,11 @@ def report_sensors():
     volts = volts_reading/239.0
 
     mqtt.publish(
-        '{}/voltage'.format(CLIENT_ID), str(volts), retain = True)
+        '{}/voltage'.format(client_id), str(volts), retain = True)
     log.info('volt: {}'.format(volts))
 
     mqtt.publish(
-        '{}/status'.format(CLIENT_ID), 'disconnected', retain = True)
+        '{}/status'.format(client_id), 'disconnected', retain = True)
 
     mqtt.disconnect()
     log.info('MQTT disconnected')
@@ -118,9 +119,17 @@ def go_to_sleep(force=True):
 
 def main():
     blink(2)
-    network_wait()
     try:
+        init_network()
         get_logger()
+        try:
+            ntptime.settime()
+        except Exception as e:
+            log.error("Error: %s" % e)
+
+        localtime = time.localtime()
+        log.info('init {}'.format(localtime))
+        
         reset_cause = machine.reset_cause()
         log.info("Reset cause: %s" % reset_cause)
         blink(3)
@@ -129,7 +138,5 @@ def main():
         go_to_sleep(False)
     except Exception as e:
         log.error("Error: %s" % e)
-    finally:
-        log.close()
 
 main()
