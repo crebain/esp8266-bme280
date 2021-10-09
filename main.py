@@ -114,7 +114,6 @@ def go_to_sleep(force=True):
 
     if force or reset_cause == machine.DEEPSLEEP_RESET or reset_cause == machine.WDT_RESET:
         log.info('going deep sleep')
-        log.close()
         esp.deepsleep(sleep)
 
 def main():
@@ -130,5 +129,7 @@ def main():
         go_to_sleep(False)
     except Exception as e:
         log.error("Error: %s" % e)
+    finally:
+        log.close()
 
 main()
