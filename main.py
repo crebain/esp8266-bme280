@@ -41,10 +41,8 @@ def network_wait():
 
 
 def get_logger():
-    addr = socket.getaddrinfo('libreelec.lan', 514)
-    ip = addr[0][-1][0]
     global log
-    log = usyslog.UDPClient(ip)
+    log = usyslog.UDPClient('libreelec.lan')
     return log
 
 
@@ -103,17 +101,18 @@ def go_to_sleep(force=True):
     log.info('go_to_sleep({})'.format(force))
     reset_cause = machine.reset_cause()
     log.info('That was a reset #{}'.format(reset_cause))
-    if force or reset_cause == machine.DEEPSLEEP_RESET or reset_cause == machine.WDT_RESET:
-        rtc = machine.RTC()
-        log.info('rtc created')
-        # that's in microseconds
-        sleep = 10*60*1000*1000
-        mem = rtc.memory()
-        log.info('rtc memory read')
-        if mem != b'':
-            log.info('mem is not b\'\'')
-            sleep = int(mem)
 
+    rtc = machine.RTC()
+    log.info('rtc created')
+    # that's in microseconds
+    sleep = 10*60*1000*1000
+    mem = rtc.memory()
+    log.info('rtc memory read')
+    if mem != b'':
+        log.info('mem is {}'.format(mem))
+        sleep = int(mem)
+
+    if force or reset_cause == machine.DEEPSLEEP_RESET or reset_cause == machine.WDT_RESET:
         log.info('going deep sleep')
         log.close()
         esp.deepsleep(sleep)
