@@ -8,6 +8,7 @@ import esp
 import usyslog
 import ntptime
 import time
+import webrepl
 
 client_id = 'cripple'
 
@@ -107,6 +108,10 @@ def go_to_sleep(force=True):
     if mem != b'':
         log.info('mem is {}'.format(mem))
         sleep = int(mem)
+
+    if webrepl.client_s:
+        log.info('webrepl connected, not going to sleep')
+        return
 
     if force or reset_cause == machine.DEEPSLEEP_RESET or reset_cause == machine.WDT_RESET:
         log.info('going deep sleep')
