@@ -109,7 +109,7 @@ def go_to_sleep(force=True):
         log.info('mem is {}'.format(mem))
         sleep = int(mem)
 
-    if webrepl.client_s:
+    if not force and webrepl.client_s:
         log.info('webrepl connected, not going to sleep')
         return
 
