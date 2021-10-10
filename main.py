@@ -28,14 +28,9 @@ def init_network():
     nic.active(True)
     if not nic.isconnected():
         nic.connect()
-        counter = 0
         print("Waiting for connection...")
         while not nic.isconnected():
-            counter += 1
             utime.sleep(1)
-            if counter == 10:
-                blink(6)
-                machine.reset()
 
     print(nic.ifconfig())
     global client_id
