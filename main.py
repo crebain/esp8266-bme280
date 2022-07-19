@@ -49,7 +49,7 @@ def report_sensors():
 
     (temp, pressure, humidity) = bme.read_compensated_data()
 
-    mqtt = MQTTClient(client_id, 'libreelec.lan', keepalive=60)
+    mqtt = MQTTClient(client_id, 'nas.lan', keepalive=60)
     mqtt.set_last_will('{}/status'.format(client_id), 'offline', retain = True)
     mqtt.connect()
     log.info('MQTT connected')
